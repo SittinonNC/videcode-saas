@@ -44,10 +44,11 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Login successful', type: AuthResponseDto })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() loginDto: LoginDto, @CurrentTenant() tenantId: string) {
+    // For login, if no tenantId is resolved from subdomain, we'll let auth-service handle it
     return firstValueFrom(
       this.authClient.send(AUTH_PATTERNS.LOGIN, {
         ...loginDto,
-        tenantId,
+        tenantId: tenantId || null,
       }),
     );
   }

@@ -9,7 +9,7 @@ import {
 } from '@app/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { v4 as uuidv4 } from 'uuid';
-import { GBPrimePayService } from './gbprimepay.service';
+import { StripeService } from './stripe.service';
 
 @Injectable()
 export class PaymentService {
@@ -17,7 +17,7 @@ export class PaymentService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly gbPrimePayService: GBPrimePayService,
+    private readonly stripeService: StripeService,
   ) {}
 
   /**
@@ -60,18 +60,31 @@ export class PaymentService {
       amount: number;
       qrCodeUrl?: string;
       redirectUrl?: string;
+      paymentIntentId?: string;
+      clientSecret?: string | null;
     } = { referenceNo, amount };
 
-    if (method === PaymentMethod.QR_CODE) {
-      const qrResult = await this.gbPrimePayService.createQRPayment(referenceNo, amount);
+    if (method === PaymentMethod.PROMPTPAY || method === PaymentMethod.QR_CODE) {
+      const stripeResult = await this.stripeService.createPromptPayPayment(referenceNo, amount);
       await this.prisma.bookingPayment.update({
         where: { id: payment.id },
-        data: { qrCodeUrl: qrResult.qrCodeUrl },
+        data: {
+          paymentIntentId: stripeResult.paymentIntentId,
+          clientSecret: stripeResult.clientSecret,
+        },
       });
-      paymentDetails = { ...paymentDetails, ...qrResult };
+      paymentDetails = {
+        ...paymentDetails,
+        paymentIntentId: stripeResult.paymentIntentId,
+        clientSecret: stripeResult.clientSecret,
+      };
     } else if (method === PaymentMethod.CREDIT_CARD) {
-      const ccResult = await this.gbPrimePayService.createCreditCardPayment(referenceNo, amount);
-      paymentDetails = { ...paymentDetails, ...ccResult };
+      const stripeResult = await this.stripeService.createCardPayment(referenceNo, amount);
+      paymentDetails = {
+        ...paymentDetails,
+        paymentIntentId: stripeResult.paymentIntentId,
+        clientSecret: stripeResult.clientSecret,
+      };
     }
 
     this.logger.log(`Booking payment created: ${referenceNo}`);
@@ -122,14 +135,24 @@ export class PaymentService {
       amount: number;
       qrCodeUrl?: string;
       redirectUrl?: string;
+      paymentIntentId?: string;
+      clientSecret?: string | null;
     } = { referenceNo, amount };
 
-    if (method === PaymentMethod.QR_CODE) {
-      const qrResult = await this.gbPrimePayService.createQRPayment(referenceNo, amount);
-      paymentDetails = { ...paymentDetails, ...qrResult };
+    if (method === PaymentMethod.PROMPTPAY || method === PaymentMethod.QR_CODE) {
+      const stripeResult = await this.stripeService.createPromptPayPayment(referenceNo, amount);
+      paymentDetails = {
+        ...paymentDetails,
+        paymentIntentId: stripeResult.paymentIntentId,
+        clientSecret: stripeResult.clientSecret,
+      };
     } else if (method === PaymentMethod.CREDIT_CARD) {
-      const ccResult = await this.gbPrimePayService.createCreditCardPayment(referenceNo, amount);
-      paymentDetails = { ...paymentDetails, ...ccResult };
+      const stripeResult = await this.stripeService.createCardPayment(referenceNo, amount);
+      paymentDetails = {
+        ...paymentDetails,
+        paymentIntentId: stripeResult.paymentIntentId,
+        clientSecret: stripeResult.clientSecret,
+      };
     }
 
     this.logger.log(`Platform payment created: ${referenceNo} for ${plan} x ${months} months`);
@@ -200,17 +223,24 @@ export class PaymentService {
       throw { code: 'INVALID_STATUS', message: 'Payment is no longer pending' };
     }
 
-    const qrResult = await this.gbPrimePayService.createQRPayment(
+    const stripeResult = await this.stripeService.createPromptPayPayment(
       referenceNo,
       Number(payment.amount),
     );
 
     await this.prisma.bookingPayment.update({
       where: { id: payment.id },
-      data: { qrCodeUrl: qrResult.qrCodeUrl },
+      data: {
+        paymentIntentId: stripeResult.paymentIntentId,
+        clientSecret: stripeResult.clientSecret,
+      },
     });
 
-    return qrResult;
+    return {
+      paymentIntentId: stripeResult.paymentIntentId,
+      clientSecret: stripeResult.clientSecret,
+      amount: Number(payment.amount),
+    };
   }
 
   /**
@@ -231,8 +261,12 @@ export class PaymentService {
 
     const refundAmount = amount || Number(payment.amount);
 
-    // Call GB Prime Pay refund API
-    await this.gbPrimePayService.processRefund(referenceNo, refundAmount);
+    // Call Stripe refund API
+    if (!payment.paymentIntentId) {
+      throw { code: 'PAYMENT_INTENT_MISSING', message: 'Payment Intent ID not found' };
+    }
+
+    await this.stripeService.processRefund(payment.paymentIntentId, refundAmount);
 
     // Update payment status
     await this.prisma.bookingPayment.update({

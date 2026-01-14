@@ -4,7 +4,7 @@ import { DatabaseModule } from '@app/common';
 
 import { PaymentController } from './payment/payment.controller';
 import { PaymentService } from './payment/payment.service';
-import { GBPrimePayService } from './payment/gbprimepay.service';
+import { StripeService } from './payment/stripe.service';
 import { WebhookController } from './webhook/webhook.controller';
 
 @Module({
@@ -16,6 +16,6 @@ import { WebhookController } from './webhook/webhook.controller';
     DatabaseModule,
   ],
   controllers: [PaymentController, WebhookController],
-  providers: [PaymentService, GBPrimePayService],
+  providers: [PaymentService, StripeService],
 })
 export class PaymentModule {}

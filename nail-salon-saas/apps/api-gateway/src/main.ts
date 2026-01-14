@@ -78,7 +78,7 @@ Most endpoints require a Bearer JWT token. Use the /auth/login endpoint to obtai
     },
   });
 
-  const port = configService.get<number>('PORT', 3000);
+  const port = configService.get<number>('PORT', 8080);
   await app.listen(port);
 
   logger.log(`🚀 API Gateway is running on: http://localhost:${port}`);

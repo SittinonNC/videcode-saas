@@ -36,7 +36,8 @@ export enum BookingStatus {
 }
 
 export enum PaymentMethod {
-  QR_CODE = 'QR_CODE',
+  PROMPTPAY = 'PROMPTPAY',
+  QR_CODE = 'QR_CODE', // Legacy, kept for backwards compatibility
   CREDIT_CARD = 'CREDIT_CARD',
   BANK_TRANSFER = 'BANK_TRANSFER',
 }

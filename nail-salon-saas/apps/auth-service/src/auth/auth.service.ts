@@ -81,15 +81,24 @@ export class AuthService {
    * Authenticate user and return JWT tokens
    */
   async login(dto: LoginDto) {
-    // Find user by email in tenant
-    const user = await this.prisma.user.findUnique({
-      where: {
-        tenantId_email: {
-          tenantId: dto.tenantId,
-          email: dto.email,
+    let user;
+
+    // If tenantId is provided, use compound unique key
+    if (dto.tenantId) {
+      user = await this.prisma.user.findUnique({
+        where: {
+          tenantId_email: {
+            tenantId: dto.tenantId,
+            email: dto.email,
+          },
         },
-      },
-    });
+      });
+    } else {
+      // If no tenantId, find user by email only (for easier login)
+      user = await this.prisma.user.findFirst({
+        where: { email: dto.email },
+      });
+    }
 
     if (!user) {
       throw { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' };

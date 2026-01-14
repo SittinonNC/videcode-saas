@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsEnum, IsOptional, IsUUID, Min } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsOptional, IsUUID, Min, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { PaymentMethod, PaymentStatus, SubscriptionPlan } from '../enums';
@@ -36,44 +36,21 @@ export class CreatePlatformPaymentDto {
   months?: number;
 }
 
-// GB Prime Pay Webhook payload
-export class GBPrimePayWebhookDto {
+// Stripe Webhook payload (simplified - Stripe event object is complex)
+export class StripeWebhookDto {
   @ApiProperty()
   @IsString()
-  referenceNo: string;
-
-  @ApiProperty()
-  @IsString()
-  resultCode: string;
+  id: string; // Event ID
 
   @ApiProperty()
   @IsString()
-  amount: string;
+  type: string; // Event type (e.g., 'payment_intent.succeeded')
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  transactionId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  gbpReferenceNo?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  currencyCode?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  paymentType?: string;
-
-  // Signature for verification
   @ApiProperty()
-  @IsString()
-  checksum: string;
+  @IsObject()
+  data: {
+    object: Record<string, unknown>; // Payment Intent or Subscription object
+  };
 }
 
 export class PaymentStatusDto {
@@ -128,8 +105,11 @@ export class PaymentResponseDto {
   @ApiProperty()
   referenceNo: string;
 
-  @ApiPropertyOptional()
-  transactionId?: string;
+  @ApiPropertyOptional({ description: 'Stripe Payment Intent ID' })
+  paymentIntentId?: string;
+
+  @ApiPropertyOptional({ description: 'Stripe client secret for front-end' })
+  clientSecret?: string;
 
   @ApiProperty()
   amount: number;

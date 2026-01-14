@@ -17,7 +17,7 @@ import {
   SERVICES,
   CreateBookingPaymentDto,
   CreatePlatformPaymentDto,
-  GBPrimePayWebhookDto,
+  StripeWebhookDto,
   RefundPaymentDto,
   PaymentResponseDto,
   QRCodePaymentResponseDto,
@@ -32,17 +32,34 @@ export class PaymentController {
 
   @Post('booking')
   @Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF)
-  @ApiOperation({ summary: 'Create payment for a booking' })
-  @ApiBody({ type: CreateBookingPaymentDto })
-  @ApiResponse({ status: 201, description: 'Payment initiated', type: PaymentResponseDto })
+  @ApiOperation({ summary: 'Create payment for booking' })
+  @ApiResponse({
+    status: 201,
+    description: 'Payment created',
+    type: PaymentResponseDto,
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        bookingId: { type: 'string', example: 'uuid' },
+        paymentMethod: {
+          type: 'string',
+          enum: ['PROMPTPAY', 'CREDIT_CARD'],
+          example: 'PROMPTPAY',
+        },
+      },
+      required: ['bookingId', 'paymentMethod'],
+    },
+  })
   async createBookingPayment(
     @CurrentTenant() tenantId: string,
-    @Body() createDto: CreateBookingPaymentDto,
+    @Body() dto: CreateBookingPaymentDto,
   ) {
     return firstValueFrom(
       this.paymentClient.send(PAYMENT_PATTERNS.CREATE_BOOKING_PAYMENT, {
         tenantId,
-        data: createDto,
+        data: dto,
       }),
     );
   }
@@ -123,16 +140,16 @@ export class PaymentController {
   }
 
   /**
-   * GB Prime Pay Webhook endpoint
-   * This endpoint is called by GB Prime Pay to notify about payment status
+   * Stripe Webhook endpoint
+   * This endpoint is called by Stripe to notify about payment status
    */
   @Public()
-  @Post('webhook/gbprimepay')
+  @Post('webhook/stripe')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'GB Prime Pay webhook receiver' })
-  @ApiBody({ type: GBPrimePayWebhookDto })
+  @ApiOperation({ summary: 'Stripe webhook receiver' })
+  @ApiBody({ type: StripeWebhookDto })
   @ApiResponse({ status: 200, description: 'Webhook processed' })
-  async handleWebhook(@Body() webhookDto: GBPrimePayWebhookDto) {
+  async handleWebhook(@Body() webhookDto: StripeWebhookDto) {
     return firstValueFrom(this.paymentClient.send(PAYMENT_PATTERNS.HANDLE_WEBHOOK, webhookDto));
   }
 }

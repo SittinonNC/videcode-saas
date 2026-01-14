@@ -235,11 +235,13 @@ model BookingPayment {
   amount          Decimal       @db.Decimal(10, 2)
   currency        String        @default("THB")
   
-  // GB Prime Pay fields
+  // Stripe fields
   referenceNo     String        @unique
-  transactionId   String?
+  paymentIntentId String?       // Stripe Payment Intent ID
+  clientSecret    String?       // Stripe client secret for front-end
+  transactionId   String?       // Legacy field
   paymentMethod   PaymentMethod
-  qrCodeUrl       String?       // For QR code payments
+  qrCodeUrl       String?       // For QR code payments (legacy)
   
   status          PaymentStatus @default(PENDING)
   paidAt          DateTime?
@@ -288,6 +290,7 @@ enum BookingStatus {
 }
 
 enum PaymentMethod {
+  PROMPTPAY
   QR_CODE
   CREDIT_CARD
   BANK_TRANSFER
