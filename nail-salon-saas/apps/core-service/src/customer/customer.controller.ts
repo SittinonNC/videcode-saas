@@ -42,6 +42,15 @@ export class CustomerController {
     }
   }
 
+  @MessagePattern(CUSTOMER_PATTERNS.GET_BY_PHONE)
+  async getCustomerByPhone(@Payload() payload: { tenantId: string; phone: string }) {
+    try {
+      return await this.customerService.getCustomerByPhone(payload.tenantId, payload.phone);
+    } catch (error) {
+      throw new RpcException({ code: 'GET_CUSTOMER_BY_PHONE_FAILED', message: error.message });
+    }
+  }
+
   @MessagePattern(CUSTOMER_PATTERNS.CREATE)
   async createCustomer(@Payload() payload: { tenantId: string; data: any }) {
     try {

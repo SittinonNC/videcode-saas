@@ -22,6 +22,7 @@ import { CustomerController } from './core/customer.controller';
 import { BookingController } from './booking/booking.controller';
 import { PaymentController } from './payment/payment.controller';
 import { HealthController } from './health/health.controller';
+import { LineController } from './line/line.controller';
 
 // Strategies
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -66,6 +67,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     CustomerController,
     BookingController,
     PaymentController,
+    LineController,
   ],
   providers: [
     JwtStrategy,

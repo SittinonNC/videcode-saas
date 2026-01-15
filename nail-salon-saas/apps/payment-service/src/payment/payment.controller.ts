@@ -85,4 +85,70 @@ export class PaymentController {
       throw new RpcException({ code: 'REFUND_FAILED', message: error.message });
     }
   }
+
+  @MessagePattern(PAYMENT_PATTERNS.GET_BANK_INFO)
+  async getBankInfo(@Payload() payload: { tenantId: string; bookingId: string }) {
+    try {
+      this.logger.log(`Getting bank info for booking: ${payload.bookingId}`);
+      return await this.paymentService.getBankInfo(payload.tenantId, payload.bookingId);
+    } catch (error) {
+      throw new RpcException({
+        code: error.code || 'GET_BANK_INFO_FAILED',
+        message: error.message,
+      });
+    }
+  }
+
+  @MessagePattern(PAYMENT_PATTERNS.VERIFY_SLIP)
+  async verifySlip(
+    @Payload()
+    payload: {
+      tenantId: string;
+      bookingId: string;
+      slipImageBuffer: string; // base64 encoded
+      slipImageUrl: string;
+    },
+  ) {
+    try {
+      this.logger.log(`Verifying slip for booking: ${payload.bookingId}`);
+      const imageBuffer = Buffer.from(payload.slipImageBuffer, 'base64');
+      return await this.paymentService.verifySlipPayment(
+        payload.tenantId,
+        payload.bookingId,
+        imageBuffer,
+        payload.slipImageUrl,
+      );
+    } catch (error) {
+      throw new RpcException({
+        code: error.code || 'VERIFY_SLIP_FAILED',
+        message: error.message,
+      });
+    }
+  }
+
+  @MessagePattern(PAYMENT_PATTERNS.HANDLE_WEBHOOK)
+  async handleWebhook(@Payload() payload: any) {
+    try {
+      this.logger.log(`Handling webhook: ${JSON.stringify(payload).slice(0, 100)}...`);
+      return await this.paymentService.handleStripeWebhook(payload);
+    } catch (error) {
+      throw new RpcException({
+        code: error.code || 'HANDLE_WEBHOOK_FAILED',
+        message: error.message,
+      });
+    }
+  }
+
+  @MessagePattern(PAYMENT_PATTERNS.VERIFY_PLATFORM_PAYMENT)
+  async verifyPlatformPayment(@Payload() payload: { tenantId: string; referenceNo: string }) {
+    try {
+      this.logger.log(`Verifying platform payment: ${payload.referenceNo}`);
+      return await this.paymentService.verifyPlatformPayment(payload.referenceNo);
+    } catch (error) {
+      throw new RpcException({
+        code: error.code || 'VERIFY_PLATFORM_PAYMENT_FAILED',
+        message: error.message,
+      });
+    }
+  }
 }

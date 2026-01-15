@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Param, Inject, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Inject,
+  HttpCode,
+  HttpStatus,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ClientProxy } from '@nestjs/microservices';
 import {
   ApiTags,
@@ -7,6 +19,7 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -85,6 +98,34 @@ export class PaymentController {
     );
   }
 
+  @HttpCode(HttpStatus.OK)
+  @Post('subscription/:referenceNo/verify')
+  @Roles(UserRole.OWNER)
+  @ApiOperation({ summary: 'Verify platform subscription payment' })
+  @ApiParam({ name: 'referenceNo', description: 'Payment reference number' })
+  @ApiResponse({
+    status: 200,
+    description: 'Payment verification result',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        status: { type: 'string' },
+      },
+    },
+  })
+  async verifyPlatformPayment(
+    @CurrentTenant() tenantId: string,
+    @Param('referenceNo') referenceNo: string,
+  ) {
+    return firstValueFrom(
+      this.paymentClient.send(PAYMENT_PATTERNS.VERIFY_PLATFORM_PAYMENT, {
+        tenantId,
+        referenceNo,
+      }),
+    );
+  }
+
   @Get('booking/:referenceNo/status')
   @ApiOperation({ summary: 'Get payment status by reference number' })
   @ApiParam({ name: 'referenceNo', description: 'Payment reference number' })
@@ -135,6 +176,84 @@ export class PaymentController {
         tenantId,
         referenceNo,
         ...refundDto,
+      }),
+    );
+  }
+
+  @Get('booking/:bookingId/bank-info')
+  @Public()
+  @ApiOperation({ summary: 'Get bank info for a booking (for customer to transfer)' })
+  @ApiParam({ name: 'bookingId', description: 'Booking ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Bank info for transfer',
+    schema: {
+      type: 'object',
+      properties: {
+        bankName: { type: 'string', example: 'กสิกรไทย' },
+        accountNo: { type: 'string', example: '123-4-56789-0' },
+        accountName: { type: 'string', example: 'ร้านทำเล็บ ABC' },
+        amount: { type: 'number', example: 500 },
+        bookingNumber: { type: 'string', example: 'BK123456' },
+      },
+    },
+  })
+  async getBankInfo(@CurrentTenant() tenantId: string, @Param('bookingId') bookingId: string) {
+    return firstValueFrom(
+      this.paymentClient.send(PAYMENT_PATTERNS.GET_BANK_INFO, {
+        tenantId,
+        bookingId,
+      }),
+    );
+  }
+
+  @Post('booking/:bookingId/verify-slip')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor('slipImage'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Verify slip payment for a booking' })
+  @ApiParam({ name: 'bookingId', description: 'Booking ID' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        slipImage: {
+          type: 'string',
+          format: 'binary',
+          description: 'Slip image file (JPG/PNG)',
+        },
+      },
+      required: ['slipImage'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Slip verification result',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        error: { type: 'string' },
+        paymentId: { type: 'string' },
+        amount: { type: 'number' },
+        transRef: { type: 'string' },
+      },
+    },
+  })
+  async verifySlip(
+    @CurrentTenant() tenantId: string,
+    @Param('bookingId') bookingId: string,
+    @UploadedFile() slipImage: Express.Multer.File,
+  ) {
+    // Convert file buffer to base64 for transport over Redis
+    const slipImageBuffer = slipImage.buffer.toString('base64');
+    return firstValueFrom(
+      this.paymentClient.send(PAYMENT_PATTERNS.VERIFY_SLIP, {
+        tenantId,
+        bookingId,
+        slipImageBuffer,
+        slipImageUrl: '',
       }),
     );
   }

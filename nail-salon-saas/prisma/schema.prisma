@@ -29,6 +29,14 @@ model Tenant {
   subscriptionStartAt DateTime?
   subscriptionEndAt   DateTime?
   
+  // Bank Account Info (for receiving payments from customers)
+  bankAccountNo     String?
+  bankAccountName   String?
+  bankName          String?
+  
+  // LINE Official Account Integration
+  lineUserId        String?   // LINE User ID for receiving notifications
+  
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -235,13 +243,18 @@ model BookingPayment {
   amount          Decimal       @db.Decimal(10, 2)
   currency        String        @default("THB")
   
-  // Stripe fields
+  // Stripe fields (for credit card payments)
   referenceNo     String        @unique
   paymentIntentId String?       // Stripe Payment Intent ID
   clientSecret    String?       // Stripe client secret for front-end
   transactionId   String?       // Legacy field
   paymentMethod   PaymentMethod
   qrCodeUrl       String?       // For QR code payments (legacy)
+  
+  // Slip Verification fields (for bank transfer)
+  slipImageUrl    String?       // URL of uploaded slip image
+  slipTransRef    String?       @unique // Transaction reference from slip (prevent reuse)
+  slipVerifiedAt  DateTime?     // When the slip was verified
   
   status          PaymentStatus @default(PENDING)
   paidAt          DateTime?

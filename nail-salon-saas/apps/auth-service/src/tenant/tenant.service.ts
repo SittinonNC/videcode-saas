@@ -200,4 +200,25 @@ export class TenantService {
 
     return tenant;
   }
+
+  /**
+   * Update tenant by subdomain (used by LINE webhook for linking userId)
+   */
+  async updateTenantBySubdomain(subdomain: string, data: Record<string, unknown>) {
+    const tenant = await this.prisma.tenant.update({
+      where: { subdomain: subdomain.toLowerCase() },
+      data: data as { lineUserId?: string },
+      select: {
+        id: true,
+        name: true,
+        subdomain: true,
+        lineUserId: true,
+        updatedAt: true,
+      },
+    });
+
+    this.logger.log(`Tenant ${subdomain} updated with lineUserId`);
+
+    return tenant;
+  }
 }

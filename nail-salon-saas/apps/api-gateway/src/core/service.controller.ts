@@ -14,6 +14,7 @@ import { firstValueFrom } from 'rxjs';
 import {
   CurrentTenant,
   Roles,
+  Public,
   SERVICE_PATTERNS,
   SERVICES,
   CreateServiceDto,
@@ -29,6 +30,7 @@ export class ServiceController {
   constructor(@Inject(SERVICES.CORE) private readonly coreClient: ClientProxy) {}
 
   @Get()
+  @Public()
   @ApiOperation({ summary: 'List all services (menu items)' })
   @ApiQuery({ name: 'category', required: false, description: 'Filter by category' })
   @ApiResponse({ status: 200, description: 'List of services', type: [ServiceResponseDto] })

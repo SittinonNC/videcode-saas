@@ -108,3 +108,28 @@ export class TenantResponseDto {
   @ApiProperty()
   isActive: boolean;
 }
+
+export class UpdatePaymentSettingsDto {
+  @ApiPropertyOptional({ example: 'กสิกรไทย', description: 'ชื่อธนาคาร' })
+  @IsOptional()
+  @IsString()
+  bankName?: string;
+
+  @ApiPropertyOptional({ example: '123-4-56789-0', description: 'เลขบัญชีธนาคาร' })
+  @IsOptional()
+  @IsString()
+  bankAccountNo?: string;
+
+  @ApiPropertyOptional({ example: 'ร้านทำเล็บ ABC', description: 'ชื่อบัญชี' })
+  @IsOptional()
+  @IsString()
+  bankAccountName?: string;
+
+  @ApiPropertyOptional({
+    example: 'U1234567890abcdef...',
+    description: 'LINE User ID สำหรับรับแจ้งเตือน',
+  })
+  @IsOptional()
+  @IsString()
+  lineUserId?: string;
+}

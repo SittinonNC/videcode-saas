@@ -133,7 +133,7 @@ export class PaymentResponseDto {
 // Subscription pricing (for reference)
 export const SUBSCRIPTION_PRICING: Record<SubscriptionPlan, number> = {
   [SubscriptionPlan.TRIAL]: 0,
-  [SubscriptionPlan.BASIC]: 999,
-  [SubscriptionPlan.PROFESSIONAL]: 2499,
-  [SubscriptionPlan.ENTERPRISE]: 5999,
+  [SubscriptionPlan.BASIC]: 299,
+  [SubscriptionPlan.PROFESSIONAL]: 599,
+  [SubscriptionPlan.ENTERPRISE]: 1299,
 };

@@ -19,6 +19,7 @@ export const TENANT_PATTERNS = {
   GET_BY_ID: 'tenant.get_by_id',
   GET_BY_SUBDOMAIN: 'tenant.get_by_subdomain',
   UPDATE: 'tenant.update',
+  UPDATE_BY_SUBDOMAIN: 'tenant.update_by_subdomain',
   UPDATE_SUBSCRIPTION: 'tenant.update_subscription',
 } as const;
 
@@ -83,6 +84,9 @@ export const PAYMENT_PATTERNS = {
   HANDLE_WEBHOOK: 'payment.handle_webhook',
   GENERATE_QR: 'payment.generate_qr',
   PROCESS_REFUND: 'payment.process_refund',
+  VERIFY_SLIP: 'payment.verify_slip',
+  GET_BANK_INFO: 'payment.get_bank_info',
+  VERIFY_PLATFORM_PAYMENT: 'payment.verify_platform_payment',
 } as const;
 
 // Combine all patterns for easy access

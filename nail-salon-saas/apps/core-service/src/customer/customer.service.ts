@@ -147,6 +147,26 @@ export class CustomerService {
   }
 
   /**
+   * Get customer by phone number (returns null if not found)
+   */
+  async getCustomerByPhone(tenantId: string, phone: string) {
+    const customer = (await this.customerModel.findUnique({
+      where: {
+        tenantId_phone: { tenantId, phone },
+      },
+    })) as CustomerRecord | null;
+
+    if (!customer) {
+      return null;
+    }
+
+    return {
+      ...customer,
+      totalSpent: Number(customer.totalSpent),
+    };
+  }
+
+  /**
    * Create a new customer
    */
   async createCustomer(tenantId: string, data: CreateCustomerDto) {

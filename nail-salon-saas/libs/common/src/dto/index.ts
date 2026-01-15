@@ -21,3 +21,6 @@ export * from './payment.dto';
 
 // Common/Shared DTOs
 export * from './common.dto';
+
+// LINE DTOs
+export * from './line.dto';

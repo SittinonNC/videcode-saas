@@ -96,4 +96,19 @@ export class TenantController {
       });
     }
   }
+
+  @MessagePattern(TENANT_PATTERNS.UPDATE_BY_SUBDOMAIN)
+  async updateTenantBySubdomain(
+    @Payload() payload: { subdomain: string; data: Record<string, unknown> },
+  ) {
+    try {
+      this.logger.log(`Updating tenant by subdomain: ${payload.subdomain}`);
+      return await this.tenantService.updateTenantBySubdomain(payload.subdomain, payload.data);
+    } catch (error) {
+      throw new RpcException({
+        code: 'TENANT_UPDATE_FAILED',
+        message: error.message,
+      });
+    }
+  }
 }

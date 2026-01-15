@@ -57,6 +57,45 @@ export class CreateBookingDto {
   discount?: number;
 }
 
+export class CreatePublicBookingDto {
+  @ApiProperty({ example: 'Emily' })
+  @IsString()
+  customerFirstName: string;
+
+  @ApiProperty({ example: 'Chen' })
+  @IsString()
+  customerLastName: string;
+
+  @ApiProperty({ example: '+66891234567' })
+  @IsString()
+  customerPhone: string;
+
+  @ApiPropertyOptional({ example: 'emily@example.com' })
+  @IsOptional()
+  @IsString()
+  customerEmail?: string;
+
+  @ApiProperty({ description: 'Staff ID who will perform the service' })
+  @IsUUID()
+  staffId: string;
+
+  @ApiProperty({ example: '2024-03-15T10:00:00Z', description: 'Booking start time' })
+  @IsDateString()
+  startTime: string;
+
+  @ApiProperty({ type: [BookingServiceItemDto], description: 'Services to book' })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => BookingServiceItemDto)
+  services: BookingServiceItemDto[];
+
+  @ApiPropertyOptional({ example: 'Customer prefers quiet environment' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
 export class UpdateBookingDto {
   @ApiPropertyOptional({ description: 'Staff ID' })
   @IsOptional()
@@ -109,13 +148,15 @@ export class CheckAvailabilityDto {
 }
 
 export class GetBookingsByDateRangeDto {
-  @ApiProperty({ example: '2024-03-01' })
-  @IsDateString()
-  startDate: string;
+  @ApiProperty({ example: '2024-03-01', required: false })
+  @IsOptional()
+  @IsString()
+  startDate?: string;
 
-  @ApiProperty({ example: '2024-03-31' })
-  @IsDateString()
-  endDate: string;
+  @ApiProperty({ example: '2024-03-31', required: false })
+  @IsOptional()
+  @IsString()
+  endDate?: string;
 
   @ApiPropertyOptional({ description: 'Filter by staff ID' })
   @IsOptional()

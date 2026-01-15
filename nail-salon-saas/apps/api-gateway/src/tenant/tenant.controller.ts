@@ -63,4 +63,37 @@ export class TenantController {
       }),
     );
   }
+
+  @Put('payment-settings')
+  @Roles(UserRole.OWNER)
+  @ApiOperation({ summary: 'Update payment settings (bank info & LINE)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        bankName: { type: 'string', example: 'กสิกรไทย' },
+        bankAccountNo: { type: 'string', example: '123-4-56789-0' },
+        bankAccountName: { type: 'string', example: 'ร้านทำเล็บ ABC' },
+        lineUserId: { type: 'string', example: 'U1234567890abcdef...' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Payment settings updated' })
+  async updatePaymentSettings(
+    @CurrentTenant() tenantId: string,
+    @Body()
+    settingsDto: {
+      bankName?: string;
+      bankAccountNo?: string;
+      bankAccountName?: string;
+      lineUserId?: string;
+    },
+  ) {
+    return firstValueFrom(
+      this.authClient.send(TENANT_PATTERNS.UPDATE, {
+        tenantId,
+        data: settingsDto,
+      }),
+    );
+  }
 }

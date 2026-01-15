@@ -25,10 +25,13 @@ import {
   CurrentTenant,
   CurrentUser,
   Roles,
+  Public,
   BOOKING_PATTERNS,
+  CUSTOMER_PATTERNS,
   SERVICES,
   ICurrentUser,
   CreateBookingDto,
+  CreatePublicBookingDto,
   UpdateBookingDto,
   CancelBookingDto,
   CheckAvailabilityDto,
@@ -42,7 +45,10 @@ import {
 @ApiBearerAuth('JWT-auth')
 @Controller('bookings')
 export class BookingController {
-  constructor(@Inject(SERVICES.BOOKING) private readonly bookingClient: ClientProxy) {}
+  constructor(
+    @Inject(SERVICES.BOOKING) private readonly bookingClient: ClientProxy,
+    @Inject(SERVICES.CORE) private readonly coreClient: ClientProxy,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List bookings' })
@@ -106,6 +112,54 @@ export class BookingController {
         tenantId,
         userId: user.id,
         data: createDto,
+      }),
+    );
+  }
+
+  @Post('public')
+  @Public()
+  @ApiOperation({ summary: 'Create a new booking (Public)' })
+  @ApiBody({ type: CreatePublicBookingDto })
+  @ApiResponse({ status: 201, description: 'Booking created', type: BookingResponseDto })
+  @ApiResponse({ status: 409, description: 'Time slot conflict' })
+  async createPublicBooking(
+    @CurrentTenant() tenantId: string,
+    @Body() createDto: CreatePublicBookingDto,
+  ) {
+    // 1. Find or Create Customer
+    let customer = await firstValueFrom(
+      this.coreClient.send(CUSTOMER_PATTERNS.GET_BY_PHONE, {
+        tenantId,
+        phone: createDto.customerPhone,
+      }),
+    );
+
+    if (!customer) {
+      customer = await firstValueFrom(
+        this.coreClient.send(CUSTOMER_PATTERNS.CREATE, {
+          tenantId,
+          data: {
+            firstName: createDto.customerFirstName,
+            lastName: createDto.customerLastName,
+            phone: createDto.customerPhone,
+            email: createDto.customerEmail,
+          },
+        }),
+      );
+    }
+
+    // 2. Create Booking
+    return firstValueFrom(
+      this.bookingClient.send(BOOKING_PATTERNS.CREATE, {
+        tenantId,
+        userId: null,
+        data: {
+          customerId: customer.id,
+          staffId: createDto.staffId,
+          startTime: createDto.startTime,
+          services: createDto.services,
+          notes: createDto.notes,
+        },
       }),
     );
   }

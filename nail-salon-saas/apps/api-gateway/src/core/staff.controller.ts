@@ -13,6 +13,7 @@ import { firstValueFrom } from 'rxjs';
 import {
   CurrentTenant,
   Roles,
+  Public,
   STAFF_PATTERNS,
   SERVICES,
   CreateStaffDto,
@@ -28,6 +29,7 @@ export class StaffController {
   constructor(@Inject(SERVICES.CORE) private readonly coreClient: ClientProxy) {}
 
   @Get()
+  @Public()
   @ApiOperation({ summary: 'List all staff members' })
   @ApiResponse({ status: 200, description: 'List of staff', type: [StaffResponseDto] })
   async listStaff(@CurrentTenant() tenantId: string, @Query() pagination: PaginationDto) {
@@ -102,6 +104,7 @@ export class StaffController {
   }
 
   @Get(':id/availability')
+  @Public()
   @ApiOperation({ summary: 'Get staff availability for a date' })
   @ApiParam({ name: 'id', description: 'Staff ID' })
   @ApiResponse({ status: 200, description: 'Availability slots' })

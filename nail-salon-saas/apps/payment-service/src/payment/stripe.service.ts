@@ -145,6 +145,51 @@ export class StripeService {
   }
 
   /**
+   * Create checkout session for one-time payment (Prepaid Subscription)
+   */
+  async createPaymentCheckoutSession(
+    tenantId: string,
+    referenceNo: string,
+    amount: number,
+    productName: string,
+    successUrl: string,
+    cancelUrl: string,
+  ) {
+    try {
+      const session = await this.stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card', 'promptpay'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'thb',
+              product_data: {
+                name: productName,
+              },
+              unit_amount: Math.round(amount * 100),
+            },
+            quantity: 1,
+          },
+        ],
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        client_reference_id: referenceNo,
+        metadata: { tenantId, referenceNo },
+      });
+
+      this.logger.log(`Payment checkout session created: ${session.id}`);
+
+      return {
+        sessionId: session.id,
+        url: session.url,
+      };
+    } catch (error) {
+      this.logger.error(`Payment checkout session creation failed: ${(error as Error).message}`);
+      throw error;
+    }
+  }
+
+  /**
    * Process refund
    */
   async processRefund(paymentIntentId: string, amount?: number) {
@@ -197,5 +242,12 @@ export class StripeService {
    */
   async getSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
     return this.stripe.subscriptions.retrieve(subscriptionId);
+  }
+
+  /**
+   * Retrieve checkout session
+   */
+  async getCheckoutSession(sessionId: string): Promise<Stripe.Checkout.Session> {
+    return this.stripe.checkout.sessions.retrieve(sessionId);
   }
 }
