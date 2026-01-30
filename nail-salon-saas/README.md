@@ -42,21 +42,14 @@ cd nail-salon-saas
 npm install
 ```
 
-### 2. Setup Environment
-
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-### 3. Start Infrastructure
+### 2. Start Infrastructure
 
 ```bash
 # Start PostgreSQL and Redis
 docker-compose up -d postgres redis
 ```
 
-### 4. Setup Database
+### 3. Setup Database
 
 ```bash
 # Generate Prisma client
@@ -66,7 +59,7 @@ npm run prisma:generate
 npm run prisma:migrate
 ```
 
-### 5. Start Services (Development)
+### 4. Start Services (Development)
 
 ```bash
 # Option 1: Start all services at once
@@ -80,7 +73,7 @@ npm run start:dev booking-service
 npm run start:dev payment-service
 ```
 
-### 6. Access the API
+### 5. Access the API
 
 - **Swagger Docs**: http://localhost:3000/api/docs
 - **Health Check**: http://localhost:3000/api/v1/health
@@ -128,6 +121,7 @@ Every query in the system **MUST** filter by `tenant_id` to ensure data isolatio
 ## 🔐 Authentication
 
 1. Register a new tenant (shop):
+
 ```bash
 POST /api/v1/auth/register-tenant
 {
@@ -142,6 +136,7 @@ POST /api/v1/auth/register-tenant
 ```
 
 2. Login:
+
 ```bash
 POST /api/v1/auth/login
 {
@@ -151,26 +146,27 @@ POST /api/v1/auth/login
 ```
 
 3. Use the JWT token:
+
 ```bash
 Authorization: Bearer <token>
 ```
 
 ## 📝 API Endpoints
 
-| Service | Endpoint | Description |
-|---------|----------|-------------|
-| Auth | `POST /auth/login` | User login |
-| Auth | `POST /auth/register` | Register user |
-| Auth | `POST /auth/register-tenant` | Register new shop |
-| Staff | `GET /staff` | List staff |
-| Staff | `POST /staff` | Create staff |
-| Services | `GET /services` | List service menu |
-| Services | `POST /services` | Create service |
-| Customers | `GET /customers` | List customers |
-| Customers | `POST /customers` | Create customer |
-| Bookings | `POST /bookings` | Create booking |
-| Bookings | `GET /bookings/availability` | Check availability |
-| Payments | `POST /payments/booking` | Create payment |
+| Service   | Endpoint                     | Description        |
+| --------- | ---------------------------- | ------------------ |
+| Auth      | `POST /auth/login`           | User login         |
+| Auth      | `POST /auth/register`        | Register user      |
+| Auth      | `POST /auth/register-tenant` | Register new shop  |
+| Staff     | `GET /staff`                 | List staff         |
+| Staff     | `POST /staff`                | Create staff       |
+| Services  | `GET /services`              | List service menu  |
+| Services  | `POST /services`             | Create service     |
+| Customers | `GET /customers`             | List customers     |
+| Customers | `POST /customers`            | Create customer    |
+| Bookings  | `POST /bookings`             | Create booking     |
+| Bookings  | `GET /bookings/availability` | Check availability |
+| Payments  | `POST /payments/booking`     | Create payment     |
 
 See full documentation at `/api/docs`.
 
